@@ -15,8 +15,8 @@
 ## 安装
 
 ```bash
-git clone <你的仓库地址> Codex-Manager
-cd Codex-Manager
+git clone https://github.com/Ideal-ljl/Remote-Codex-Gateway.git Remote-Codex-Gateway
+cd Remote-Codex-Gateway
 cp deploy/remote-codex-gateway/config.yaml.example deploy/remote-codex-gateway/config.yaml
 vi deploy/remote-codex-gateway/config.yaml
 ./deploy/remote-codex-gateway/install.sh
