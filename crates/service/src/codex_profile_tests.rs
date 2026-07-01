@@ -427,6 +427,32 @@ fn history_repair_aligns_direct_and_gateway_providers() {
 }
 
 #[test]
+fn history_repair_prefers_configured_model_provider_over_chatgpt_auth() {
+    let dir = temp_profile("history-config-provider");
+    fs::create_dir_all(&dir).expect("mkdir profile");
+    let thread_id = "thread-config-provider";
+    create_state_db(&dir, thread_id, DEFAULT_HISTORY_PROVIDER_ID);
+    fs::write(
+        dir.join(AUTH_FILE),
+        r#"{"auth_mode":"chatgpt","tokens":{"access_token":"access-token"}}"#,
+    )
+    .expect("write auth");
+    fs::write(
+        dir.join(CONFIG_FILE),
+        r#"model_provider = "remote_gateway""#,
+    )
+    .expect("write config");
+
+    let summary = repair_history(Some(dir.to_str().expect("profile path"))).expect("repair");
+
+    assert!(summary.warnings.is_empty(), "{:?}", summary.warnings);
+    assert_eq!(summary.target_provider, "remote_gateway");
+    assert_eq!(summary.updated_sqlite_row_count, 1);
+    assert_eq!(sqlite_provider(&dir, thread_id), "remote_gateway");
+    cleanup_profile(&dir);
+}
+
+#[test]
 fn history_repair_appends_missing_session_index_once() {
     let dir = temp_profile("history-index");
     fs::create_dir_all(&dir).expect("mkdir profile");

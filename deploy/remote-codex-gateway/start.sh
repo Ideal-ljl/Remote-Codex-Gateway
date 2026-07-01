@@ -2353,6 +2353,26 @@ warm_codex_app_models() {
   fi
 }
 
+repair_codex_app_history() {
+  local config_path="$1"
+  local codex_home codex_home_json repair_resp repair_error repair_message
+
+  codex_home="$(dirname "$config_path")"
+  codex_home_json="$(json_quote "$codex_home")"
+  repair_resp="$(rpc_call "codexProfile/repairHistory" "{\"codexHome\":$codex_home_json}")" || {
+    warn "Codex App history repair request failed"
+    return 0
+  }
+  repair_error="$(rpc_error_message "$repair_resp")"
+  if [[ -n "$repair_error" ]]; then
+    warn "Codex App history repair failed: $repair_error"
+    return 0
+  fi
+
+  repair_message="$(json_get_first "$repair_resp" "result.message")"
+  step "${repair_message:-Codex App history visibility checked}"
+}
+
 restart_codex_app_server() {
   command -v pgrep >/dev/null 2>&1 || {
     warn "pgrep not found; reopen the Codex remote SSH session for the new provider config"
@@ -2406,6 +2426,7 @@ configure_codex_app_provider() {
   ensure_codex_app_api_key_file "$key_path" || return 1
   write_codex_app_provider_config "$config_path" "$provider_id" "$provider_name" "$base_url" "$wire_api" "$key_path" || return 1
   warm_codex_app_models "$key_path" "$base_url"
+  repair_codex_app_history "$config_path"
 
   step "Codex App provider configured: $provider_id -> $base_url"
   step "Codex App config: $config_path"

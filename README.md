@@ -134,7 +134,7 @@ codexApp:
   restartAppServer: false
 ```
 
-`start` 健康检查通过后会创建平台 Key 文件并写入 `~/.codex/config.toml`，第一次写入前会备份到 `~/.codex/config.toml.remote-gateway.bak`。`warmModels` 会预热模型目录和账号路由，减少第一次请求遇到冷缓存的概率。默认不重启 app-server；重新打开 Codex 远端 SSH 会话后生效。
+`start` 健康检查通过后会创建平台 Key 文件并写入 `~/.codex/config.toml`，第一次写入前会备份到 `~/.codex/config.toml.remote-gateway.bak`。随后会按当前 `model_provider` 修复 Codex App 本地历史可见性，修复前会备份受影响的历史文件。`warmModels` 会预热模型目录和账号路由，减少第一次请求遇到冷缓存的概率。默认不重启 app-server；重新打开 Codex 远端 SSH 会话后生效。
 
 ## 常用命令
 

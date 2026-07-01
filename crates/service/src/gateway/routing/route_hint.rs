@@ -16,7 +16,8 @@ const ROUTE_HEALTH_P2C_BALANCED_WINDOW_ENV: &str = "CODEXMANAGER_ROUTE_HEALTH_P2
 const ROUTE_STATE_TTL_SECS_ENV: &str = "CODEXMANAGER_ROUTE_STATE_TTL_SECS";
 const ROUTE_STATE_CAPACITY_ENV: &str = "CODEXMANAGER_ROUTE_STATE_CAPACITY";
 const DEFAULT_ROUTE_HEALTH_P2C_ENABLED: bool = true;
-const DEFAULT_ROUTE_HEALTH_P2C_ORDERED_WINDOW: usize = 3;
+// 中文注释：ordered 默认必须严格保持候选池顺序；只有显式调大窗口时才启用健康度换头。
+const DEFAULT_ROUTE_HEALTH_P2C_ORDERED_WINDOW: usize = 1;
 // 中文注释：balanced 默认应严格轮询所有可用账号；仅在显式调大窗口时才启用健康度换头。
 const DEFAULT_ROUTE_HEALTH_P2C_BALANCED_WINDOW: usize = 1;
 // 中文注释：Route 状态（按 key_id + model 维度）用于 round-robin 起点与 P2C nonce。

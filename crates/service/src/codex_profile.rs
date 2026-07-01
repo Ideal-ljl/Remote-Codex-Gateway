@@ -721,6 +721,9 @@ fn status_for_profile_with_history_repair(
 }
 
 fn target_history_provider_for_profile(profile_dir: &Path) -> Result<String, String> {
+    if let Some(provider) = configured_model_provider(profile_dir)? {
+        return Ok(provider);
+    }
     let status = status_for_profile(profile_dir)?;
     match status.mode {
         CodexProfileMode::Gateway => Ok(PROVIDER_ID.to_string()),
@@ -741,6 +744,19 @@ fn target_history_provider_for_profile(profile_dir: &Path) -> Result<String, Str
                 })
             }),
     }
+}
+
+fn configured_model_provider(profile_dir: &Path) -> Result<Option<String>, String> {
+    let Some(content) = read_optional(&profile_dir.join(CONFIG_FILE))? else {
+        return Ok(None);
+    };
+    let doc = parse_config(&content)?;
+    Ok(doc
+        .get("model_provider")
+        .and_then(Item::as_str)
+        .map(str::trim)
+        .filter(|provider| !provider.is_empty())
+        .map(str::to_string))
 }
 
 fn repair_history_for_provider(

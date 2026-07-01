@@ -466,6 +466,66 @@ fn health_p2c_promotes_healthier_candidate_in_ordered_mode() {
     reload_from_env();
 }
 
+/// 函数 `ordered_mode_keeps_priority_order_by_default`
+///
+/// 作者: gaohongshun
+///
+/// 时间: 2026-04-02
+///
+/// # 参数
+/// 无
+///
+/// # 返回
+/// 无
+#[test]
+fn ordered_mode_keeps_priority_order_by_default() {
+    let _guard = crate::test_env_guard();
+    let _quality_guard = super::super::route_quality::route_quality_tests_guard();
+    super::super::route_quality::clear_route_quality_for_tests();
+    let prev_strategy = std::env::var(ROUTE_STRATEGY_ENV).ok();
+    let prev_p2c = std::env::var(ROUTE_HEALTH_P2C_ENABLED_ENV).ok();
+    let prev_ordered_window = std::env::var(ROUTE_HEALTH_P2C_ORDERED_WINDOW_ENV).ok();
+
+    std::env::set_var(ROUTE_HEALTH_P2C_ENABLED_ENV, "1");
+    std::env::remove_var(ROUTE_HEALTH_P2C_ORDERED_WINDOW_ENV);
+    std::env::set_var(ROUTE_STRATEGY_ENV, "ordered");
+    reload_from_env();
+    clear_route_state_for_tests();
+
+    for _ in 0..4 {
+        super::super::route_quality::record_route_quality("acc-a", 429);
+        super::super::route_quality::record_route_quality("acc-b", 200);
+    }
+
+    let mut candidates = candidate_list();
+    apply_route_strategy(&mut candidates, "gk-ordered-default", Some("gpt-5.3-codex"));
+    assert_eq!(
+        account_ids(&candidates),
+        vec![
+            "acc-a".to_string(),
+            "acc-b".to_string(),
+            "acc-c".to_string()
+        ]
+    );
+
+    if let Some(value) = prev_strategy {
+        std::env::set_var(ROUTE_STRATEGY_ENV, value);
+    } else {
+        std::env::remove_var(ROUTE_STRATEGY_ENV);
+    }
+    if let Some(value) = prev_p2c {
+        std::env::set_var(ROUTE_HEALTH_P2C_ENABLED_ENV, value);
+    } else {
+        std::env::remove_var(ROUTE_HEALTH_P2C_ENABLED_ENV);
+    }
+    if let Some(value) = prev_ordered_window {
+        std::env::set_var(ROUTE_HEALTH_P2C_ORDERED_WINDOW_ENV, value);
+    } else {
+        std::env::remove_var(ROUTE_HEALTH_P2C_ORDERED_WINDOW_ENV);
+    }
+    reload_from_env();
+}
+
 /// 函数 `balanced_mode_keeps_strict_round_robin_by_default`
 ///
 /// 作者: gaohongshun

@@ -113,6 +113,8 @@ codexApp:
   restartAppServer: false
 ```
 
+`start` 写入 provider 配置后会按当前 `model_provider` 修复 Codex App 本地历史可见性，修复前会备份受影响的历史文件。
+
 ## 命令
 
 服务：
