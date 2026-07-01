@@ -1,0 +1,100 @@
+# Copy this file to config.yaml, then edit it for the target server.
+# The loader intentionally supports a small, predictable YAML subset:
+# nested maps, scalar values, and bracket lists such as [primary, backup].
+
+gateway:
+  # Codex clients use: http://<server-ip-or-domain>:48761/v1
+  webPort: 48761
+  publicBaseUrl: http://127.0.0.1:48761
+  # bindAddr: 0.0.0.0:48761
+  dataDir: ""
+  # serviceBin: /absolute/path/to/codexmanager-service
+  # buildProxyUrl: http://127.0.0.1:7890
+  forceBuild: false
+  # upstreamProxyUrl: http://127.0.0.1:7890
+  # proxyList: http://proxy-a:7890,http://proxy-b:7890
+
+accounts:
+  # Lower priority means earlier use when routing.strategy is ordered.
+  # Slot names such as primary/backup are the short names used by CLI account commands.
+  loginAccount: primary
+  applyConfigAfterLogin: true
+  slots:
+    primary:
+      tags: primary
+      note: Primary Codex Pro account
+      priority: 0
+    backup:
+      tags: backup
+      note: Backup Codex Pro account
+      priority: 10
+
+routing:
+  strategy: ordered
+
+quotaGuard:
+  enabled: true
+  primaryMinRemainingPercent: 5
+  weeklyMinRemainingPercent: 10
+  allowAllLowFallback: true
+
+background:
+  usagePollingEnabled: true
+  usagePollIntervalSecs: 300
+  tokenRefreshPollingEnabled: true
+  tokenRefreshPollIntervalSecs: 300
+  gatewayKeepaliveEnabled: true
+  gatewayKeepaliveIntervalSecs: 180
+
+timeouts:
+  upstreamTotalTimeoutMs: 0
+  upstreamStreamTimeoutMs: 600000
+  sseKeepaliveIntervalMs: 15000
+
+logging:
+  gatewayTraceStdout: true
+  gatewayErrorStdout: true
+  gatewayTraceStdoutSlowMs: 5000
+
+login:
+  timeoutSecs: 900
+  pollSecs: 3
+
+rustup:
+  # Uncomment one mirror when rustup downloads from static.rust-lang.org are slow.
+  # RsProxy:
+  # distServer: https://rsproxy.cn
+  # updateRoot: https://rsproxy.cn/rustup
+  # USTC:
+  # distServer: https://mirrors.ustc.edu.cn/rust-static
+  # updateRoot: https://mirrors.ustc.edu.cn/rust-static/rustup
+  # Optional exact rustup-init binary/script URL override.
+  # initUrl: https://rsproxy.cn/rustup-init.sh
+
+cargo:
+  # Cargo dependency downloads use crates.io unless this is set.
+  # Supported values: rsproxy, ustc.
+  registryMirror: rsproxy
+  # Or provide a custom sparse registry index:
+  # registryIndex: sparse+https://example.com/crates.io-index/
+  gitFetchWithCli: true
+
+apiKey:
+  name: remote-codex
+  model: gpt-5.4
+
+codexApp:
+  # On background start, configure ~/.codex/config.toml so Codex App SSH
+  # sessions use this gateway as their model provider.
+  configureProviderOnStart: true
+  configPath: ~/.codex/config.toml
+  keyPath: ~/.codex/remote-gateway-api-key
+  providerId: remote_gateway
+  providerName: Remote Codex Gateway
+  # Defaults to http://127.0.0.1:<gateway.webPort>/v1 when empty.
+  # baseUrl: http://127.0.0.1:48761/v1
+  wireApi: responses
+  # Warm model catalog and account route mappings so the first app-server request does not hit cold cache.
+  warmModels: true
+  # Keep false unless you are okay with active Codex SSH sessions being dropped.
+  restartAppServer: false

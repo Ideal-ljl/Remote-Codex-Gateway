@@ -1,0 +1,37 @@
+# Rust
+/target/
+**/target/
+**/*.rs.bk
+
+# Build outputs
+/portable/
+
+# Worktrees
+/.worktrees/
+/.tmp-antigravity-manager*/
+
+# Logs & local data
+/data/
+*.log
+*.db
+*.sqlite
+codexmanager.rpc-token
+codex resume*.txt
+.tmp_stage_ps/
+.tmp_stage_sh/
+.codex-manager-run/
+deploy/remote-codex-gateway/config.env
+deploy/remote-codex-gateway/config.yaml
+deploy/remote-codex-gateway/data/
+deploy/remote-codex-gateway/logs/
+deploy/remote-codex-gateway/backups/
+
+# IDE/editor files
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+codex resume 019cbbf9-0037-73b1-b353-1cd0946a1acd
+# claude
+.claude

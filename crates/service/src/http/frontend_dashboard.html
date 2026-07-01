@@ -1,0 +1,1162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Remote Codex Gateway</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --line: #d9dee7;
+      --text: #17202a;
+      --muted: #657181;
+      --accent: #1769aa;
+      --accent-soft: #e8f2fb;
+      --green: #14804a;
+      --green-soft: #e9f7ef;
+      --amber: #a65f00;
+      --amber-soft: #fff2d8;
+      --red: #b42318;
+      --red-soft: #fdecec;
+      --shadow: 0 10px 30px rgba(25, 33, 46, 0.08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    button, input, select {
+      font: inherit;
+    }
+    button {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text);
+      min-height: 34px;
+      padding: 0 12px;
+      cursor: pointer;
+    }
+    button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+    button.ghost {
+      background: #f8fafc;
+    }
+    button.danger {
+      border-color: #efc3bd;
+      background: var(--red-soft);
+      color: var(--red);
+    }
+    button.small {
+      min-height: 30px;
+      padding: 0 9px;
+      font-size: 12px;
+    }
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+    input, select {
+      width: 100%;
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      padding: 6px 9px;
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 56px;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(12px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .mark {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #1769aa, #14804a);
+    }
+    h1 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+    .subtle {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 28px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .dot.ok { background: var(--green); }
+    .dot.warn { background: var(--amber); }
+    .dot.err { background: var(--red); }
+    main {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 18px 24px 32px;
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) 180px 140px auto;
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+    .field label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .auth {
+      display: none;
+      margin-bottom: 16px;
+      padding: 14px;
+      border: 1px solid #f1c77d;
+      border-radius: 8px;
+      background: #fff8e8;
+    }
+    .auth.visible {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) auto;
+      gap: 10px;
+      align-items: end;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .metric {
+      min-height: 84px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .metric-label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .metric-value {
+      margin-top: 8px;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+    .metric-extra {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+    .control-panel {
+      margin-bottom: 14px;
+    }
+    .control-body {
+      padding: 14px 16px 16px;
+    }
+    .control-grid {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 140px auto auto;
+      gap: 10px;
+      align-items: end;
+    }
+    .login-box {
+      display: none;
+      margin-top: 14px;
+      padding: 12px;
+      border: 1px solid #bfd8ee;
+      border-radius: 8px;
+      background: var(--accent-soft);
+    }
+    .login-box.visible {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .login-code {
+      margin-top: 5px;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+    .login-url {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 700;
+      word-break: break-all;
+    }
+    .panel {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    h2 {
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+    .table-wrap {
+      overflow: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #edf0f4;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+      background: #fbfcfd;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    tr:last-child td {
+      border-bottom: 0;
+    }
+    .name-cell {
+      min-width: 150px;
+      max-width: 220px;
+      white-space: normal;
+    }
+    .name-main {
+      font-weight: 700;
+      word-break: break-word;
+    }
+    .name-meta {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      word-break: break-word;
+    }
+    .row-edit {
+      display: grid;
+      grid-template-columns: minmax(112px, 1fr) auto;
+      gap: 6px;
+      align-items: center;
+      min-width: 188px;
+    }
+    .row-edit input {
+      min-height: 30px;
+      padding: 4px 7px;
+      font-size: 13px;
+    }
+    .priority-edit {
+      grid-template-columns: 64px auto;
+      min-width: 126px;
+    }
+    .account-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-width: 216px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: #eef2f7;
+      color: #455364;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .badge.ok { background: #e9f7ef; color: var(--green); }
+    .badge.warn { background: #fff2d8; color: var(--amber); }
+    .badge.err { background: #fdecec; color: var(--red); }
+    .bar-cell {
+      min-width: 150px;
+    }
+    .bar-track {
+      position: relative;
+      width: 128px;
+      height: 9px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #e6eaf0;
+    }
+    .bar-fill {
+      display: block;
+      height: 100%;
+      min-width: 0;
+      background: var(--green);
+    }
+    .bar-fill.low { background: var(--amber); }
+    .bar-fill.critical { background: var(--red); }
+    .bar-text {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .log-table {
+      min-width: 980px;
+    }
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+    }
+    .log-error {
+      max-width: 360px;
+      color: var(--red);
+      white-space: normal;
+      word-break: break-word;
+    }
+    .empty {
+      padding: 24px 16px;
+      color: var(--muted);
+    }
+    .toast {
+      min-height: 20px;
+      margin: 0 0 12px;
+      color: var(--muted);
+    }
+    .toast.err {
+      color: var(--red);
+    }
+    .toast.ok {
+      color: var(--green);
+    }
+    @media (max-width: 1040px) {
+      .toolbar,
+      .metrics,
+      .grid,
+      .control-grid,
+      .login-box.visible {
+        grid-template-columns: 1fr;
+      }
+      .auth.visible {
+        grid-template-columns: 1fr;
+      }
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px 16px;
+      }
+      .top-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+      main {
+        padding: 14px 12px 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"></div>
+      <div>
+        <h1>Remote Codex Gateway</h1>
+        <div class="subtle" id="lastUpdated">Not loaded</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span class="status-pill"><span class="dot" id="statusDot"></span><span id="statusText">Token required</span></span>
+      <button id="refreshBtn" type="button">Refresh</button>
+    </div>
+  </header>
+  <main>
+    <section class="auth" id="authPanel">
+      <div class="field">
+        <label for="tokenInput">RPC token</label>
+        <input id="tokenInput" type="password" autocomplete="off" spellcheck="false">
+      </div>
+      <button class="primary" id="saveTokenBtn" type="button">Use token</button>
+    </section>
+
+    <section class="toolbar">
+      <div class="field">
+        <label for="queryInput">Log filter</label>
+        <input id="queryInput" type="search" placeholder="model, account, path, status, trace">
+      </div>
+      <div class="field">
+        <label for="limitSelect">Rows</label>
+        <select id="limitSelect">
+          <option value="20">20</option>
+          <option value="50" selected>50</option>
+          <option value="100">100</option>
+          <option value="200">200</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="autoSelect">Auto refresh</label>
+        <select id="autoSelect">
+          <option value="0">Off</option>
+          <option value="5000">5 sec</option>
+          <option value="15000" selected>15 sec</option>
+          <option value="30000">30 sec</option>
+        </select>
+      </div>
+      <button id="clearTokenBtn" type="button">Clear token</button>
+    </section>
+
+    <div class="toast" id="toast"></div>
+
+    <section class="metrics" id="metrics"></section>
+
+    <section class="panel control-panel">
+      <div class="panel-header">
+        <h2>Account Controls</h2>
+        <span class="subtle">Device login, quota refresh, priority, status, and deletion</span>
+      </div>
+      <div class="control-body">
+        <div class="control-grid">
+          <div class="field">
+            <label for="addNameInput">New account name</label>
+            <input id="addNameInput" type="text" autocomplete="off" spellcheck="false" placeholder="primary, backup, work">
+          </div>
+          <div class="field">
+            <label for="addPriorityInput">Priority</label>
+            <input id="addPriorityInput" type="number" value="0" step="1">
+          </div>
+          <button class="primary" id="startLoginBtn" type="button">Add account</button>
+          <button class="ghost" id="refreshQuotaBtn" type="button">Refresh quotas</button>
+        </div>
+        <div class="login-box" id="loginBox">
+          <div>
+            <div class="subtle" id="loginTitle">Waiting for device login</div>
+            <a class="login-url" id="loginUrl" target="_blank" rel="noreferrer"></a>
+            <div class="login-code mono" id="loginCode"></div>
+            <div class="subtle" id="loginStatus"></div>
+          </div>
+          <button id="cancelLoginBtn" type="button">Cancel</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Accounts</h2>
+          <span class="subtle" id="accountCount">0 accounts</span>
+        </div>
+        <div class="table-wrap" id="accountsView"></div>
+      </section>
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Request Logs</h2>
+          <span class="subtle" id="logCount">0 logs</span>
+        </div>
+        <div class="table-wrap" id="logsView"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "remoteGatewayRpcToken";
+    const state = {
+      token: "",
+      busy: false,
+      accounts: [],
+      usage: [],
+      overview: null,
+      logs: [],
+      totalLogs: 0,
+      timer: null,
+      loginTimer: null,
+      pendingLogin: null
+    };
+
+    const nodes = {
+      authPanel: document.getElementById("authPanel"),
+      tokenInput: document.getElementById("tokenInput"),
+      saveTokenBtn: document.getElementById("saveTokenBtn"),
+      clearTokenBtn: document.getElementById("clearTokenBtn"),
+      refreshBtn: document.getElementById("refreshBtn"),
+      queryInput: document.getElementById("queryInput"),
+      limitSelect: document.getElementById("limitSelect"),
+      autoSelect: document.getElementById("autoSelect"),
+      addNameInput: document.getElementById("addNameInput"),
+      addPriorityInput: document.getElementById("addPriorityInput"),
+      startLoginBtn: document.getElementById("startLoginBtn"),
+      refreshQuotaBtn: document.getElementById("refreshQuotaBtn"),
+      loginBox: document.getElementById("loginBox"),
+      loginTitle: document.getElementById("loginTitle"),
+      loginUrl: document.getElementById("loginUrl"),
+      loginCode: document.getElementById("loginCode"),
+      loginStatus: document.getElementById("loginStatus"),
+      cancelLoginBtn: document.getElementById("cancelLoginBtn"),
+      toast: document.getElementById("toast"),
+      metrics: document.getElementById("metrics"),
+      accountsView: document.getElementById("accountsView"),
+      logsView: document.getElementById("logsView"),
+      accountCount: document.getElementById("accountCount"),
+      logCount: document.getElementById("logCount"),
+      lastUpdated: document.getElementById("lastUpdated"),
+      statusDot: document.getElementById("statusDot"),
+      statusText: document.getElementById("statusText")
+    };
+
+    function html(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    function compactId(value) {
+      const text = String(value || "-");
+      return text.length <= 18 ? text : `${text.slice(0, 8)}...${text.slice(-6)}`;
+    }
+
+    function words(value) {
+      return String(value || "").split(/[\s,;]+/).map((item) => item.trim()).filter(Boolean);
+    }
+
+    function validateAccountName(value) {
+      const name = String(value || "").trim();
+      if (!name) throw new Error("Account name is required.");
+      if (name.length > 64) throw new Error("Account name must be 64 characters or fewer.");
+      if (name.startsWith("-") || /[\s,;]/.test(name)) throw new Error("Account name cannot contain spaces, commas, semicolons, or start with '-'.");
+      return name;
+    }
+
+    function mergedTags(existing, name) {
+      const items = words(existing).filter((item) => item !== name);
+      return [name, ...items].join(",");
+    }
+
+    function accountById(accountId) {
+      return state.accounts.find((account) => account.id === accountId);
+    }
+
+    function looksGenerated(value) {
+      const text = String(value || "").trim();
+      return !text || text.includes("@") || text.includes("::") || text.startsWith("auth0|") || text.startsWith("apple|");
+    }
+
+    function accountName(account) {
+      if (!looksGenerated(account.label)) return account.label;
+      const tags = words(account.tags);
+      if (tags.length) return tags[0];
+      if (account.note && account.note.length <= 32 && !looksGenerated(account.note)) return account.note;
+      return compactId(account.id);
+    }
+
+    function accountMaps() {
+      const byId = new Map();
+      state.accounts.forEach((account) => byId.set(account.id, accountName(account)));
+      return byId;
+    }
+
+    function accountForLog(log, names) {
+      let id = log.accountId;
+      if (!id && log.actualSourceKind === "openai_account") id = log.actualSourceId;
+      if (!id) id = log.initialAccountId;
+      return id ? (names.get(id) || compactId(id)) : "-";
+    }
+
+    function parseHashToken() {
+      if (!location.hash) return "";
+      const params = new URLSearchParams(location.hash.slice(1));
+      return (params.get("rpcToken") || params.get("token") || "").trim();
+    }
+
+    function initToken() {
+      const token = parseHashToken() || localStorage.getItem(STORAGE_KEY) || "";
+      if (token) {
+        state.token = token;
+        localStorage.setItem(STORAGE_KEY, token);
+        if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+      }
+      updateAuthState();
+    }
+
+    function updateAuthState() {
+      const hasToken = Boolean(state.token);
+      nodes.authPanel.classList.toggle("visible", !hasToken);
+      nodes.tokenInput.value = hasToken ? "" : nodes.tokenInput.value;
+      setStatus(hasToken ? "warn" : "", hasToken ? "Waiting" : "Token required");
+    }
+
+    function setStatus(kind, text) {
+      nodes.statusDot.className = `dot ${kind || ""}`.trim();
+      nodes.statusText.textContent = text;
+    }
+
+    function showToast(message, kind) {
+      nodes.toast.textContent = message || "";
+      nodes.toast.className = `toast ${kind || ""}`.trim();
+    }
+
+    async function rpc(method, params = {}) {
+      const response = await fetch("/rpc", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-codexmanager-rpc-token": state.token
+        },
+        body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params })
+      });
+      if (!response.ok) throw new Error(`RPC ${method} failed: HTTP ${response.status}`);
+      const payload = await response.json();
+      if (payload.error) throw new Error(payload.error.message || `RPC ${method} failed`);
+      const result = payload.result || {};
+      if (result.error) throw new Error(result.error);
+      if (result.ok === false) throw new Error(result.message || `RPC ${method} failed`);
+      return result;
+    }
+
+    function fmtNumber(value) {
+      const number = Number(value || 0);
+      return new Intl.NumberFormat().format(number);
+    }
+
+    function fmtCost(value) {
+      const number = Number(value || 0);
+      return `$${number.toFixed(4)}`;
+    }
+
+    function fmtTime(ts) {
+      if (!ts) return "-";
+      return new Date(Number(ts) * 1000).toLocaleString();
+    }
+
+    function fmtAge(ts) {
+      if (!ts) return "-";
+      const delta = Math.max(0, Math.floor(Date.now() / 1000) - Number(ts));
+      if (delta < 90) return `${delta}s ago`;
+      const mins = Math.floor(delta / 60);
+      if (mins < 90) return `${mins}m ago`;
+      const hours = Math.floor(mins / 60);
+      if (hours < 48) return `${hours}h ago`;
+      return `${Math.floor(hours / 24)}d ago`;
+    }
+
+    function remainingPercent(usedPercent) {
+      if (usedPercent === null || usedPercent === undefined || Number.isNaN(Number(usedPercent))) return null;
+      return Math.max(0, Math.min(100, 100 - Number(usedPercent)));
+    }
+
+    function levelClass(value) {
+      if (value === null) return "warn";
+      if (value < 20) return "critical";
+      if (value < 50) return "low";
+      return "";
+    }
+
+    function progress(remaining) {
+      const value = remaining === null ? 0 : Math.max(0, Math.min(100, remaining));
+      const text = remaining === null ? "unknown" : `${remaining.toFixed(1)}% left`;
+      const klass = levelClass(remaining);
+      return `<div class="bar-track"><span class="bar-fill ${klass}" style="width:${value}%"></span></div><div class="bar-text">${html(text)}</div>`;
+    }
+
+    function badge(value, kind) {
+      return `<span class="badge ${kind || ""}">${html(value || "-")}</span>`;
+    }
+
+    function statusBadge(status) {
+      const value = String(status || "-").toLowerCase();
+      if (value === "active" || value === "ok" || value === "available") return badge(status, "ok");
+      if (value === "disabled" || value === "banned" || value === "inactive") return badge(status, "err");
+      return badge(status, "warn");
+    }
+
+    function httpBadge(code) {
+      if (code === null || code === undefined) return badge("pending", "warn");
+      const number = Number(code);
+      if (number >= 200 && number < 300) return badge(code, "ok");
+      if (number >= 400) return badge(code, "err");
+      return badge(code, "warn");
+    }
+
+    function renderMetrics() {
+      const overview = state.overview || {};
+      const openai = overview.openaiAccount || {};
+      const today = overview.todayUsage || {};
+      const active = state.accounts.filter((item) => String(item.status || "").toLowerCase() === "active").length;
+      const total = state.accounts.length;
+      const primary = openai.primaryRemainPercent ?? null;
+      const secondary = openai.secondaryRemainPercent ?? null;
+      const items = [
+        ["Accounts", `${active}/${total}`, `${openai.availableCount ?? active} available`],
+        ["5h pool", primary === null ? "-" : `${primary}%`, `${openai.lowQuotaCount ?? 0} low quota`],
+        ["Week pool", secondary === null ? "-" : `${secondary}%`, `refreshed ${fmtAge(openai.lastRefreshedAt)}`],
+        ["Today usage", fmtNumber(today.totalTokens || 0), `${fmtCost(today.estimatedCostUsd)} estimated`]
+      ];
+      nodes.metrics.innerHTML = items.map(([label, value, extra]) => `
+        <article class="metric">
+          <div class="metric-label">${html(label)}</div>
+          <div class="metric-value">${html(value)}</div>
+          <div class="metric-extra">${html(extra)}</div>
+        </article>
+      `).join("");
+    }
+
+    function renderAccounts() {
+      nodes.accountCount.textContent = `${state.accounts.length} accounts`;
+      if (!state.accounts.length) {
+        nodes.accountsView.innerHTML = `<div class="empty">No accounts found.</div>`;
+        return;
+      }
+      const usageByAccount = new Map(state.usage.filter((item) => item.accountId).map((item) => [item.accountId, item]));
+      const rows = [...state.accounts].sort((a, b) => (a.sort || 0) - (b.sort || 0)).map((account) => {
+        const usage = usageByAccount.get(account.id) || {};
+        const tags = words(account.tags).join(", ");
+        const primary = remainingPercent(usage.usedPercent);
+        const secondary = remainingPercent(usage.secondaryUsedPercent);
+        const disabled = String(account.status || "").toLowerCase() === "disabled";
+        const toggleLabel = disabled ? "Enable" : "Disable";
+        const toggleStatus = disabled ? "active" : "disabled";
+        return `
+          <tr data-account-id="${html(account.id)}">
+            <td class="name-cell">
+              <div class="row-edit">
+                <input data-role="account-name" value="${html(accountName(account))}" spellcheck="false">
+                <button class="small" data-action="rename" type="button">Save</button>
+              </div>
+              <div class="name-meta">${html(tags || compactId(account.id))}</div>
+            </td>
+            <td>${statusBadge(account.status)}</td>
+            <td>${html(account.planType || account.subscriptionPlan || "-")}</td>
+            <td>
+              <div class="row-edit priority-edit">
+                <input data-role="account-priority" type="number" value="${html(account.sort ?? 0)}" step="1">
+                <button class="small" data-action="priority" type="button">Save</button>
+              </div>
+            </td>
+            <td class="bar-cell">${progress(primary)}</td>
+            <td class="bar-cell">${progress(secondary)}</td>
+            <td>${html(fmtAge(usage.capturedAt))}</td>
+            <td>
+              <div class="account-actions">
+                <button class="small" data-action="refresh-quota" type="button">Quota</button>
+                <button class="small" data-action="status" data-status="${toggleStatus}" type="button">${toggleLabel}</button>
+                <button class="small danger" data-action="delete" type="button">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+      nodes.accountsView.innerHTML = `
+        <table>
+          <thead><tr><th>Name</th><th>Status</th><th>Plan</th><th>Priority</th><th>5h</th><th>Week</th><th>Updated</th><th>Actions</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    function tokenText(log) {
+      const total = log.totalTokens ?? null;
+      if (total === null) return "-";
+      return `${fmtNumber(total)} total`;
+    }
+
+    function routeText(log) {
+      return log.routeStrategy || log.routeSource || log.gatewayMode || "-";
+    }
+
+    function renderLogs() {
+      nodes.logCount.textContent = `${state.logs.length} of ${state.totalLogs} logs`;
+      if (!state.logs.length) {
+        nodes.logsView.innerHTML = `<div class="empty">No request logs match the current filter.</div>`;
+        return;
+      }
+      const names = accountMaps();
+      const rows = state.logs.map((log) => {
+        const error = log.error ? `<div class="log-error">${html(log.error)}</div>` : "";
+        const latency = [log.durationMs ? `${log.durationMs}ms` : "-", log.firstResponseMs ? `first ${log.firstResponseMs}ms` : ""].filter(Boolean).join(" ");
+        const attempts = (log.attemptedAccountIds || []).map((id) => names.get(id) || compactId(id)).join(" -> ");
+        return `
+          <tr>
+            <td>${html(fmtTime(log.createdAt))}</td>
+            <td>${httpBadge(log.statusCode)}</td>
+            <td>${html(log.model || log.clientModel || "-")}</td>
+            <td>${html(accountForLog(log, names))}<div class="name-meta">${html(attempts || "")}</div></td>
+            <td>${html(routeText(log))}</td>
+            <td class="mono">${html(latency)}</td>
+            <td class="mono">${html(tokenText(log))}</td>
+            <td class="mono">${html(fmtCost(log.estimatedCostUsd))}${error}</td>
+          </tr>
+        `;
+      }).join("");
+      nodes.logsView.innerHTML = `
+        <table class="log-table">
+          <thead><tr><th>Time</th><th>Status</th><th>Model</th><th>Account</th><th>Route</th><th>Latency</th><th>Tokens</th><th>Cost</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    function renderAll() {
+      renderMetrics();
+      renderAccounts();
+      renderLogs();
+    }
+
+    async function runAction(label, action) {
+      if (!state.token) {
+        nodes.authPanel.classList.add("visible");
+        throw new Error("RPC token is required.");
+      }
+      setStatus("warn", label);
+      showToast("");
+      try {
+        const result = await action();
+        setStatus("ok", "Connected");
+        return result;
+      } catch (error) {
+        setStatus("err", "Error");
+        showToast(error.message || String(error), "err");
+        throw error;
+      }
+    }
+
+    async function updateAccount(accountId, params) {
+      await rpc("account/update", { accountId, ...params });
+      await loadData({ force: true });
+    }
+
+    function accountRowForButton(button) {
+      const row = button.closest("tr[data-account-id]");
+      if (!row) throw new Error("Account row not found.");
+      const accountId = row.getAttribute("data-account-id");
+      const account = accountById(accountId);
+      if (!account) throw new Error("Account is no longer available.");
+      return { row, accountId, account };
+    }
+
+    async function handleAccountAction(event) {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      const action = button.getAttribute("data-action");
+      const { row, accountId, account } = accountRowForButton(button);
+      if (action === "rename") {
+        const input = row.querySelector('[data-role="account-name"]');
+        const name = validateAccountName(input.value);
+        await runAction("Renaming", async () => {
+          await updateAccount(accountId, {
+            label: name,
+            tags: mergedTags(account.tags, name),
+            note: account.note || name
+          });
+          showToast(`Renamed account to ${name}.`, "ok");
+        });
+        return;
+      }
+      if (action === "priority") {
+        const input = row.querySelector('[data-role="account-priority"]');
+        const sort = Number(input.value);
+        if (!Number.isInteger(sort)) throw new Error("Priority must be an integer.");
+        await runAction("Saving priority", async () => {
+          await updateAccount(accountId, { sort });
+          showToast(`Priority saved for ${accountName(account)}.`, "ok");
+        });
+        return;
+      }
+      if (action === "refresh-quota") {
+        await runAction("Refreshing quota", async () => {
+          await rpc("account/usage/refresh", { accountId });
+          await loadData({ force: true });
+          showToast(`Quota refreshed for ${accountName(account)}.`, "ok");
+        });
+        return;
+      }
+      if (action === "status") {
+        const status = button.getAttribute("data-status") || "active";
+        await runAction("Updating status", async () => {
+          await updateAccount(accountId, { status });
+          showToast(`${accountName(account)} is now ${status}.`, "ok");
+        });
+        return;
+      }
+      if (action === "delete") {
+        if (!window.confirm(`Delete account ${accountName(account)}? This removes the account from the gateway.`)) return;
+        await runAction("Deleting account", async () => {
+          await rpc("account/delete", { accountId });
+          await loadData({ force: true });
+          showToast(`Deleted ${accountName(account)}.`, "ok");
+        });
+      }
+    }
+
+    function stopLoginPolling() {
+      if (state.loginTimer) clearInterval(state.loginTimer);
+      state.loginTimer = null;
+    }
+
+    function setLoginBox(visible, data = {}) {
+      nodes.loginBox.classList.toggle("visible", visible);
+      nodes.loginTitle.textContent = data.title || "";
+      nodes.loginUrl.textContent = data.url || "";
+      nodes.loginUrl.href = data.url || "#";
+      nodes.loginCode.textContent = data.code || "";
+      nodes.loginStatus.textContent = data.status || "";
+    }
+
+    async function findCompletedLoginAccount(pending) {
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const accounts = await rpc("account/list");
+        const items = accounts.items || [];
+        const target = items.find((account) => !pending.initialIds.has(account.id))
+          || items.find((account) => words(account.tags).includes(pending.name))
+          || items.find((account) => account.label === pending.name || account.note === pending.name);
+        if (target) return target;
+        await new Promise((resolve) => setTimeout(resolve, 800));
+      }
+      return null;
+    }
+
+    async function applyCompletedLogin() {
+      const pending = state.pendingLogin;
+      if (!pending) return;
+      const target = await findCompletedLoginAccount(pending);
+      if (!target) {
+        showToast("Login succeeded, but the new account was not found yet. Refresh the page in a moment.", "err");
+        await loadData({ force: true });
+        return;
+      }
+      await rpc("account/update", {
+        accountId: target.id,
+        label: pending.name,
+        tags: mergedTags(target.tags, pending.name),
+        note: target.note || pending.name,
+        sort: pending.priority,
+        status: "active"
+      });
+      await rpc("account/usage/refresh", { accountId: target.id }).catch(() => null);
+      await loadData({ force: true });
+      showToast(`Account ${pending.name} added.`, "ok");
+    }
+
+    async function pollLoginStatus() {
+      const pending = state.pendingLogin;
+      if (!pending) return;
+      try {
+        const status = await rpc("account/login/status", { loginId: pending.loginId });
+        const value = String(status.status || "unknown").toLowerCase();
+        nodes.loginStatus.textContent = `Status: ${value}`;
+        if (value === "success") {
+          stopLoginPolling();
+          setLoginBox(true, {
+            title: `Login completed for ${pending.name}`,
+            url: pending.url,
+            code: pending.code,
+            status: "Applying account settings..."
+          });
+          await applyCompletedLogin();
+          state.pendingLogin = null;
+          setLoginBox(false);
+          return;
+        }
+        if (value === "failed") {
+          stopLoginPolling();
+          showToast(status.error || "Device login failed.", "err");
+        }
+      } catch (error) {
+        stopLoginPolling();
+        showToast(error.message || String(error), "err");
+      }
+    }
+
+    async function startAccountLogin() {
+      const name = validateAccountName(nodes.addNameInput.value);
+      const priority = Number(nodes.addPriorityInput.value || 0);
+      if (!Number.isInteger(priority)) throw new Error("Priority must be an integer.");
+      await runAction("Starting login", async () => {
+        stopLoginPolling();
+        const initialIds = new Set(state.accounts.map((account) => account.id));
+        const result = await rpc("account/login/start", {
+          type: "chatgptDeviceCode",
+          openBrowser: false,
+          note: name,
+          tags: name
+        });
+        if (result.type !== "chatgptDeviceCode") {
+          throw new Error("Unexpected login response from gateway.");
+        }
+        state.pendingLogin = {
+          loginId: result.loginId,
+          name,
+          priority,
+          initialIds,
+          url: result.verificationUrl,
+          code: result.userCode
+        };
+        setLoginBox(true, {
+          title: `Open the login URL for ${name}`,
+          url: result.verificationUrl,
+          code: result.userCode,
+          status: "Waiting for browser confirmation..."
+        });
+        state.loginTimer = setInterval(pollLoginStatus, 3000);
+        await pollLoginStatus();
+      });
+    }
+
+    async function refreshAllQuotas() {
+      await runAction("Refreshing quotas", async () => {
+        await rpc("account/usage/refresh", {});
+        await loadData({ force: true });
+        showToast("All account quotas refreshed.", "ok");
+      });
+    }
+
+    async function loadData(options = {}) {
+      if (!state.token || (state.busy && !options.force)) return;
+      state.busy = true;
+      nodes.refreshBtn.disabled = true;
+      setStatus("warn", "Loading");
+      showToast("");
+      try {
+        const query = nodes.queryInput.value.trim();
+        const pageSize = Number(nodes.limitSelect.value || 50);
+        const [overview, accounts, usage, logs] = await Promise.all([
+          rpc("quota/overview"),
+          rpc("account/list"),
+          rpc("account/usage/list", { limit: 1000 }),
+          rpc("requestlog/list", { page: 1, pageSize, query: query || null })
+        ]);
+        state.overview = overview;
+        state.accounts = accounts.items || [];
+        state.usage = usage.items || [];
+        state.logs = logs.items || [];
+        state.totalLogs = logs.total || state.logs.length;
+        nodes.lastUpdated.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+        setStatus("ok", "Connected");
+        renderAll();
+      } catch (error) {
+        setStatus("err", "Error");
+        showToast(error.message || String(error), "err");
+        if (String(error.message || "").includes("401")) {
+          nodes.authPanel.classList.add("visible");
+        }
+      } finally {
+        state.busy = false;
+        nodes.refreshBtn.disabled = false;
+      }
+    }
+
+    function resetTimer() {
+      if (state.timer) clearInterval(state.timer);
+      const interval = Number(nodes.autoSelect.value || 0);
+      if (interval > 0) state.timer = setInterval(loadData, interval);
+    }
+
+    nodes.saveTokenBtn.addEventListener("click", () => {
+      const token = nodes.tokenInput.value.trim();
+      if (!token) return;
+      state.token = token;
+      localStorage.setItem(STORAGE_KEY, token);
+      updateAuthState();
+      loadData();
+    });
+    nodes.clearTokenBtn.addEventListener("click", () => {
+      state.token = "";
+      localStorage.removeItem(STORAGE_KEY);
+      updateAuthState();
+      showToast("Token cleared.");
+    });
+    nodes.refreshBtn.addEventListener("click", loadData);
+    nodes.startLoginBtn.addEventListener("click", () => {
+      startAccountLogin().catch((error) => showToast(error.message || String(error), "err"));
+    });
+    nodes.refreshQuotaBtn.addEventListener("click", () => {
+      refreshAllQuotas().catch((error) => showToast(error.message || String(error), "err"));
+    });
+    nodes.cancelLoginBtn.addEventListener("click", () => {
+      stopLoginPolling();
+      state.pendingLogin = null;
+      setLoginBox(false);
+      showToast("Device login polling stopped.");
+    });
+    nodes.accountsView.addEventListener("click", (event) => {
+      handleAccountAction(event).catch((error) => showToast(error.message || String(error), "err"));
+    });
+    nodes.queryInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") loadData();
+    });
+    nodes.addNameInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") startAccountLogin().catch((error) => showToast(error.message || String(error), "err"));
+    });
+    nodes.limitSelect.addEventListener("change", loadData);
+    nodes.autoSelect.addEventListener("change", resetTimer);
+
+    initToken();
+    renderAll();
+    resetTimer();
+    loadData();
+  </script>
+</body>
+</html>
